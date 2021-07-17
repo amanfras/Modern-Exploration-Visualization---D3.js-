@@ -24,6 +24,17 @@ d3.json('practica_airbnb.json')
   });
 
 function drawMap(featureCollection) {
+  var tooltip = d3.select("div")
+  .append('div')
+  .attr('class', 'tooltip')
+  .style('visibility', 'hidden')
+  .style("position", "absolute")
+  .style("pointer-events", "none")
+  .style("background-color", "white")
+  .style("border", "solid")
+  .style("border-width", "1px")
+  .style("border-radius", "5px");
+
   var center = d3.geoCentroid(featureCollection); 
   var projection = d3.geoMercator()
       .fitSize([width, height], featureCollection) 
@@ -47,7 +58,6 @@ function drawMap(featureCollection) {
       d.opacity = d.opacity ? 0 : 1;
       d3.select(this).attr('opacity', d.opacity);
       numero=d.properties.cartodb_id;
-      console.log(d.properties);
       d3.json('practica_airbnb.json').then((featureCollection) => {
         drawGraph(featureCollection);
     });
@@ -65,7 +75,22 @@ function drawMap(featureCollection) {
   });
 
   var scaleColor = d3.scaleSequential().domain([0, 280]).interpolator(d3.interpolateCool);
-  createdPath.attr('fill', (d) => scaleColor(d.properties.avgprice));
+  createdPath.attr('fill', (d) => scaleColor(d.properties.avgprice)).on("mouseover",function(event, d) {    
+    d3.select(this)
+    tooltip
+    .style("left", (event.pageX + 20) + "px")
+    .style("top", (event.pageY - 30) + "px")
+    .style("visibility", "visible")
+    .text(d.properties.name + ": " +
+        d.properties.avgprice)
+})
+.on("mouseout", function() {
+  d3.select(this)
+  tooltip.style("visibility", "hidden")
+});
+
+
+  
 };
 var svg2 = d3
   .select("div")
@@ -82,6 +107,7 @@ d3.json('practica_airbnb.json').then((featureCollection) => {
 });
 
 function drawGraph(featureCollection){
+  numero=numero-1;
   svg2.selectAll("*").remove();
   svg2.append("text").text(function(d, i) { return featureCollection.features[numero].properties.name;})
   var Ymax = d3.max(featureCollection.features[numero].properties.avgbedrooms, function (d) {
